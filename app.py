@@ -298,20 +298,6 @@ with st.sidebar:
     
     st.divider()
 
-    # Context-aware: lọc theo tâm trạng
-    st.subheader("🎭 Lọc theo Tâm trạng")
-    selected_mood = st.selectbox(
-        "Hôm nay bạn thế nào?",
-        [
-            "Tất cả (Mặc định)",
-            "😄 Vui vẻ / Hài hước",
-            "😢 Buồn / Sâu lắng",
-            "😱 Hồi hộp / Gay cấn",
-            "😎 Hành động / Kịch tính",
-        ],
-        index=0,
-    )
-    
     st.subheader("Chọn chế độ gợi ý")
     recommendation_mode = st.radio(
         "Mode:",
@@ -322,6 +308,22 @@ with st.sidebar:
         • Personalized: Dựa trên nhiều phim (User Profile)
         • HYBRID: Kết hợp tất cả (Khuyên dùng!)
         """
+    )
+
+    # [THÊM MỚI] Context-aware: Chọn tâm trạng (đặt sau mode để đúng luồng báo cáo)
+    st.divider()
+    st.subheader("🎭 Lọc theo Tâm trạng (Context-aware)")
+    selected_mood = st.selectbox(
+        "Hôm nay bạn thế nào?",
+        [
+            "Tất cả (Mặc định)",
+            "😄 Vui vẻ / Hài hước",
+            "😢 Buồn / Sâu lắng",
+            "😱 Hồi hộp / Gay cấn",
+            "😎 Hành động / Kịch tính",
+        ],
+        help="Hệ thống sẽ lọc kết quả dựa trên cảm xúc hiện tại của bạn",
+        index=0,
     )
     
     # Nếu chọn HYBRID, cho phép điều chỉnh trọng số
@@ -465,12 +467,15 @@ if not st.session_state.show_history:
                     )
                     score_column = 'hybrid_score'
                     score_label = "⭐ Hybrid Score"
-                
-                # Context-Aware Logic: Lọc kết quả theo tâm trạng đã chọn
-                if recommendations is not None and selected_mood != "Tất cả (Mặc định)":
+
+                # [THÊM MỚI] Context-Aware Logic: Lọc kết quả theo tâm trạng (Post-filtering)
+                # (sau khi có recommendations và trước if recommendations is None:)
+                if recommendations is not None and "Tất cả" not in selected_mood:
                     recommendations_before_filter = recommendations
 
+                    # Logic: Map tâm trạng sang các từ khóa thể loại (Genres)
                     if "Vui vẻ" in selected_mood:
+                        # Giữ lại phim có chữ Comedy, Family hoặc Animation
                         recommendations = recommendations[
                             recommendations["genres_clean"].str.contains(
                                 r"Comedy|Family|Animation", case=False, na=False
@@ -495,10 +500,10 @@ if not st.session_state.show_history:
                             )
                         ]
 
-                    # Nếu lọc xong mà hết phim thì fallback về danh sách gợi ý ban đầu
-                    if recommendations is None or recommendations.empty:
+                    # Nếu lọc xong mà hết phim thì hiển thị cảnh báo + fallback về danh sách gốc
+                    if recommendations.empty:
                         st.warning(
-                            f"⚠️ Không tìm thấy phim phù hợp tâm trạng '{selected_mood}' trong danh sách gợi ý này. Đang hiển thị tất cả..."
+                            f"⚠️ Không tìm thấy phim phù hợp tâm trạng '{selected_mood}' trong top gợi ý này. Đang hiển thị tất cả..."
                         )
                         recommendations = recommendations_before_filter
 
