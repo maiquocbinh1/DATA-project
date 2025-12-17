@@ -240,18 +240,23 @@ st.markdown('<p class="sub-header">Tìm kiếm phim yêu thích và nhận gợi
 if st.session_state.show_history:
     st.divider()
     
+    # Header với nút quay lại
+    col_title, col_back = st.columns([8, 2])
+    with col_title:
+        if len(st.session_state.search_history) == 0:
+            st.subheader("📜 Lịch sử tìm kiếm")
+        else:
+            st.subheader(f"📜 Lịch sử tìm kiếm ({len(st.session_state.search_history)} lần)")
+    with col_back:
+        if st.button("← Quay lại", width="stretch"):
+            st.session_state.show_history = False
+            st.rerun()
+    
+    st.divider()
+    
     if len(st.session_state.search_history) == 0:
         st.info("Chưa có lịch sử tìm kiếm. Hãy tìm kiếm phim để tạo lịch sử!")
-        st.info("💡 Click lại button '📜 Lịch sử' ở sidebar để quay lại trang chính")
     else:
-        # Header
-        col_title, col_back = st.columns([8, 2])
-        with col_title:
-            st.subheader(f"📜 Lịch sử tìm kiếm ({len(st.session_state.search_history)} lần)")
-        with col_back:
-            if st.button("← Quay lại", use_container_width=True):
-                st.session_state.show_history = False
-                st.rerun()
         
         st.divider()
         
@@ -273,7 +278,7 @@ if st.session_state.show_history:
         # Nút xóa lịch sử
         col_delete, col_spacer = st.columns([2, 8])
         with col_delete:
-            if st.button("🗑️ Xóa toàn bộ lịch sử", use_container_width=True):
+            if st.button("🗑️ Xóa toàn bộ lịch sử", width="stretch"):
                 st.session_state.search_history = []
                 st.session_state.show_history = False
                 st.rerun()
@@ -287,8 +292,9 @@ with st.sidebar:
     history_count = len(st.session_state.search_history)
     button_label = f"📜 Lịch sử ({history_count})" if history_count > 0 else "📜 Lịch sử"
     
-    if st.button(button_label, use_container_width=True):
+    if st.button(button_label, width="stretch"):
         st.session_state.show_history = not st.session_state.show_history
+        st.rerun()  # Reload ngay lập tức
     
     st.divider()
     
@@ -356,7 +362,7 @@ if not st.session_state.show_history:
 
     # Nút tìm kiếm
     button_label = "Tìm phim tương tự" if "Content-Based" in recommendation_mode else "Tìm phim phù hợp với tôi"
-    if st.button(button_label, use_container_width=True):
+    if st.button(button_label, width="stretch"):
         if len(selected_movies) == 0:
             st.warning("⚠️ Vui lòng chọn ít nhất một phim!")
         elif "Content-Based" not in recommendation_mode and len(selected_movies) < 2:
@@ -374,7 +380,7 @@ if not st.session_state.show_history:
                 
                     with col_poster_main:
                         poster_url = fetch_poster(selected_movie['id'])
-                        st.image(poster_url, use_container_width=True)
+                        st.image(poster_url, width="stretch")
                     
                     with col_info_main:
                         col_info1, col_info2, col_info3, col_info4 = st.columns(4)
@@ -472,15 +478,15 @@ if not st.session_state.show_history:
                         with st.container():
                             st.markdown('<div class="movie-card">', unsafe_allow_html=True)
                             
-                            col_rank, col_poster, col_content = st.columns([0.5, 1.5, 8])
+                            col_rank, col_poster, col_content = st.columns([0.7, 1.5, 7.8])
                             
                             with col_rank:
-                                st.markdown(f"<h2 style='color: #FF6B6B;'>#{rank}</h2>", unsafe_allow_html=True)
+                                st.markdown(f"<div style='color: #FF6B6B; font-size: 1.8rem; font-weight: bold; white-space: nowrap;'>#{rank}</div>", unsafe_allow_html=True)
                             
                             with col_poster:
                                 # Hiển thị ảnh poster
                                 poster_url = fetch_poster(row['id'])
-                                st.image(poster_url, use_container_width=True)
+                                st.image(poster_url, width="stretch")
                             
                             with col_content:
                                 st.markdown(f"### {row['title']}")
@@ -529,7 +535,7 @@ if not st.session_state.show_history:
                         data=csv,
                         file_name=filename,
                         mime="text/csv",
-                        use_container_width=True
+                        width="stretch"
                     )
 
 # Footer
