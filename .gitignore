@@ -1,31 +1,11 @@
-# Model files (too large for GitHub)
-*.pkl
+# Loại trừ file .md và .txt như yêu cầu
+*.md
+*.txt
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-*.egg-info/
-dist/
-build/
+# Ngoại lệ: Giữ lại requirements.txt (cần thiết cho project)
+!requirements.txt
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Streamlit
-.streamlit/
-
+# Loại trừ các file không cần thiết khác
+*.docx
+*.bat
+movie_recommender_model.pkl

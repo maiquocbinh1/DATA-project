@@ -124,13 +124,16 @@ print(f"✓ Cosine similarity matrix shape: {cosine_sim.shape}")
 # Tạo mapping
 indices = pd.Series(movies_merged.index, index=movies_merged['title']).drop_duplicates()
 
-# 6. Lưu model
-print("\n[6/6] Đang lưu model...")
+# 6. Lưu model (BẢN NÂNG CẤP: Hỗ trợ HYBRID SYSTEM)
+print("\n[6/6] Đang lưu model với Hybrid System support...")
 data_to_save = {
     'movies_data': movies_merged[['id', 'title', 'vote_average', 'vote_count', 'popularity', 
-                                   'genres_clean', 'overview', 'release_date', 'runtime']],
+                                   'genres_clean', 'overview', 'release_date', 'runtime',
+                                   'vote_avg_scaled', 'popularity_scaled', 'vote_count_scaled']],
     'cosine_sim': cosine_sim,
-    'indices': indices
+    'indices': indices,
+    'model_type': 'hybrid',  # Đánh dấu model hỗ trợ Hybrid
+    'tfidf_matrix': tfidf_matrix  # Lưu TF-IDF matrix để tính toán advanced features
 }
 
 with open('movie_recommender_model.pkl', 'wb') as f:
@@ -140,8 +143,12 @@ file_size = os.path.getsize('movie_recommender_model.pkl') / (1024*1024)
 print(f"✓ Đã lưu model vào 'movie_recommender_model.pkl' ({file_size:.2f} MB)")
 
 print("\n" + "=" * 60)
-print("✅ HOÀN THÀNH! Model đã sẵn sàng.")
+print("✅ HOÀN THÀNH! HYBRID MODEL đã sẵn sàng.")
 print("=" * 60)
+print("\n🎯 Tính năng:")
+print("   ✓ Content-Based Filtering (đơn phim)")
+print("   ✓ Personalized Recommendations (multi-select)")
+print("   ✓ HYBRID System (kết hợp Content + Personalized + Popularity)")
 print("\n📌 Bước tiếp theo:")
 print("   Chạy lệnh: streamlit run app.py")
 print("=" * 60)
