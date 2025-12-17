@@ -310,21 +310,31 @@ with st.sidebar:
         """
     )
 
-    # [THÊM MỚI] Context-aware: Chọn tâm trạng (đặt sau mode để đúng luồng báo cáo)
+    # [THAY THẾ] Context-aware: Chọn Độ tuổi người xem
     st.divider()
-    st.subheader("🎭 Lọc theo Tâm trạng (Context-aware)")
-    selected_mood = st.selectbox(
-        "Hôm nay bạn thế nào?",
+    st.subheader("🎂 Lọc theo phân loại độ tuổi (Age Context)")
+    age_context = st.selectbox(
+        "Phân loại độ tuổi:",
         [
-            "Tất cả (Mặc định)",
-            "😄 Vui vẻ / Hài hước",
-            "😢 Buồn / Sâu lắng",
-            "😱 Hồi hộp / Gay cấn",
-            "😎 Hành động / Kịch tính",
+            "P (Phổ biến mọi lứa tuổi)",
+            "K (<13 - cần giám sát)",
+            "T13 (13+)",
+            "T16 (16+)",
+            "T18 (18+)",
         ],
-        help="Hệ thống sẽ lọc kết quả dựa trên cảm xúc hiện tại của bạn",
+        help="Hệ thống sẽ lọc kết quả dựa trên phân loại độ tuổi (Post-filtering theo thể loại phim)",
         index=0,
     )
+
+    # Mô tả ngắn gọn để đưa vào báo cáo / giải thích UX
+    age_desc_map = {
+        "P (Phổ biến mọi lứa tuổi)": "Không hạn chế độ tuổi. Nội dung phổ quát, phù hợp mọi đối tượng.",
+        "K (<13 - cần giám sát)": "Dành cho khán giả dưới 13 tuổi, nên có sự hướng dẫn/giám sát của phụ huynh.",
+        "T13 (13+)": "Phù hợp cho khán giả từ 13 tuổi trở lên, có thể có nội dung phức tạp hơn.",
+        "T16 (16+)": "Phù hợp cho khán giả từ 16 tuổi trở lên, có thể có nội dung nặng/nhạy cảm hơn.",
+        "T18 (18+)": "Chỉ dành cho người lớn (18+), có thể chứa nội dung nhạy cảm.",
+    }
+    st.caption(f"**Mô tả:** {age_desc_map.get(age_context, '')}")
     
     # Nếu chọn HYBRID, cho phép điều chỉnh trọng số
     if "HYBRID" in recommendation_mode:
@@ -468,42 +478,51 @@ if not st.session_state.show_history:
                     score_column = 'hybrid_score'
                     score_label = "⭐ Hybrid Score"
 
-                # [THÊM MỚI] Context-Aware Logic: Lọc kết quả theo tâm trạng (Post-filtering)
-                # (sau khi có recommendations và trước if recommendations is None:)
-                if recommendations is not None and "Tất cả" not in selected_mood:
+                # [THAY THẾ] Context-Aware Logic: Lọc theo phân loại độ tuổi (Post-filtering)
+                # Lưu ý: Dataset TMDB không có nhãn kiểm duyệt chính thức, nên dùng genre làm proxy để lọc an toàn nội dung.
+                if recommendations is not None and not age_context.startswith("P"):
                     recommendations_before_filter = recommendations
 
-                    # Logic: Map tâm trạng sang các từ khóa thể loại (Genres)
-                    if "Vui vẻ" in selected_mood:
-                        # Giữ lại phim có chữ Comedy, Family hoặc Animation
+                    # Logic: Map Độ tuổi -> Thể loại phim cho phép
+                    if age_context.startswith("K"):
+                        # CHẶT CHẼ: Chỉ cho phép phim Hoạt hình và Gia đình
                         recommendations = recommendations[
                             recommendations["genres_clean"].str.contains(
-                                r"Comedy|Family|Animation", case=False, na=False
+                                r"Animation|Family", case=False, na=False
                             )
                         ]
-                    elif "Buồn" in selected_mood:
+                    elif age_context.startswith("T13"):
+                        # Ưu tiên: Hành động, Phiêu lưu, Hài, Khoa học viễn tưởng
                         recommendations = recommendations[
                             recommendations["genres_clean"].str.contains(
-                                r"Drama|Romance", case=False, na=False
+                                r"Action|Adventure|Comedy|Science Fiction|Fantasy|Romance",
+                                case=False,
+                                na=False,
                             )
                         ]
-                    elif "Hồi hộp" in selected_mood:
+                    elif age_context.startswith("T16"):
+                        # Nội dung trưởng thành hơn: thêm Drama/Crime/Thriller/War/History
                         recommendations = recommendations[
                             recommendations["genres_clean"].str.contains(
-                                r"Horror|Thriller|Mystery", case=False, na=False
+                                r"Action|Adventure|Comedy|Science Fiction|Fantasy|Romance|Drama|Crime|Thriller|War|History",
+                                case=False,
+                                na=False,
                             )
                         ]
-                    elif "Hành động" in selected_mood:
+                    elif age_context.startswith("T18"):
+                        # Người lớn: cho phép thêm Horror và các thể loại nặng đô
                         recommendations = recommendations[
                             recommendations["genres_clean"].str.contains(
-                                r"Action|Adventure|Crime", case=False, na=False
+                                r"Drama|Crime|Thriller|Romance|War|Horror|History",
+                                case=False,
+                                na=False,
                             )
                         ]
 
-                    # Nếu lọc xong mà hết phim thì hiển thị cảnh báo + fallback về danh sách gốc
+                    # Fallback: Nếu lọc xong mà hết phim
                     if recommendations.empty:
                         st.warning(
-                            f"⚠️ Không tìm thấy phim phù hợp tâm trạng '{selected_mood}' trong top gợi ý này. Đang hiển thị tất cả..."
+                            f"⚠️ Không tìm thấy phim phù hợp phân loại '{age_context}' trong danh sách này. Đang hiển thị lại tất cả..."
                         )
                         recommendations = recommendations_before_filter
 
