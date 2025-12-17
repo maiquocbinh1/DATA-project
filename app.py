@@ -297,6 +297,20 @@ with st.sidebar:
         st.rerun()  # Reload ngay lập tức
     
     st.divider()
+
+    # Context-aware: lọc theo tâm trạng
+    st.subheader("🎭 Lọc theo Tâm trạng")
+    selected_mood = st.selectbox(
+        "Hôm nay bạn thế nào?",
+        [
+            "Tất cả (Mặc định)",
+            "😄 Vui vẻ / Hài hước",
+            "😢 Buồn / Sâu lắng",
+            "😱 Hồi hộp / Gay cấn",
+            "😎 Hành động / Kịch tính",
+        ],
+        index=0,
+    )
     
     st.subheader("Chọn chế độ gợi ý")
     recommendation_mode = st.radio(
@@ -452,6 +466,42 @@ if not st.session_state.show_history:
                     score_column = 'hybrid_score'
                     score_label = "⭐ Hybrid Score"
                 
+                # Context-Aware Logic: Lọc kết quả theo tâm trạng đã chọn
+                if recommendations is not None and selected_mood != "Tất cả (Mặc định)":
+                    recommendations_before_filter = recommendations
+
+                    if "Vui vẻ" in selected_mood:
+                        recommendations = recommendations[
+                            recommendations["genres_clean"].str.contains(
+                                r"Comedy|Family|Animation", case=False, na=False
+                            )
+                        ]
+                    elif "Buồn" in selected_mood:
+                        recommendations = recommendations[
+                            recommendations["genres_clean"].str.contains(
+                                r"Drama|Romance", case=False, na=False
+                            )
+                        ]
+                    elif "Hồi hộp" in selected_mood:
+                        recommendations = recommendations[
+                            recommendations["genres_clean"].str.contains(
+                                r"Horror|Thriller|Mystery", case=False, na=False
+                            )
+                        ]
+                    elif "Hành động" in selected_mood:
+                        recommendations = recommendations[
+                            recommendations["genres_clean"].str.contains(
+                                r"Action|Adventure|Crime", case=False, na=False
+                            )
+                        ]
+
+                    # Nếu lọc xong mà hết phim thì fallback về danh sách gợi ý ban đầu
+                    if recommendations is None or recommendations.empty:
+                        st.warning(
+                            f"⚠️ Không tìm thấy phim phù hợp tâm trạng '{selected_mood}' trong danh sách gợi ý này. Đang hiển thị tất cả..."
+                        )
+                        recommendations = recommendations_before_filter
+
                 if recommendations is None:
                     st.error("❌ Không thể tìm thấy phim trong cơ sở dữ liệu.")
                 else:
